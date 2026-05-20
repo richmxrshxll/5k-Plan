@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0f0f0f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="5K Plan">
+<link id="apple-icon" rel="apple-touch-icon">
+<title>5K Training Plan · Sub 18:59</title>
+<style>
+:root {
+  --bg:#0f0f0f; --surface:#161616; --surface2:#1c1c1c; --border:#2a2a2a;
+  --accent:#f0956a; --text:#e8e4e0; --muted:#6a6560;
+  --run:#f0956a; --strength:#7eb8d4; --long:#c49a6c;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:Arial,sans-serif}
+
+.app{display:flex;flex-direction:column;height:100dvh;height:100vh;max-width:430px;margin:0 auto;overflow:hidden}
+
+/* HEADER */
+.hdr{padding:48px 20px 14px;background:var(--bg);border-bottom:1px solid var(--border);flex-shrink:0;z-index:10}
+.hdr-row{display:flex;align-items:flex-start;justify-content:space-between}
+.hdr-label{font-size:11px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);margin-bottom:3px}
+.hdr-goal{font-size:46px;font-weight:900;line-height:1;color:var(--accent)}
+.hdr-goal span{font-size:17px;font-weight:400;color:var(--muted);margin-left:4px}
+.today-badge{background:var(--accent);color:#fff;font-family:monospace;font-size:10px;font-weight:700;padding:4px 10px;border-radius:4px;letter-spacing:.05em;margin-top:4px}
+
+/* TABS */
+.tabs-wrap{overflow-x:auto;padding:10px 16px;background:var(--bg);border-bottom:1px solid var(--border);flex-shrink:0;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.tabs-wrap::-webkit-scrollbar{display:none}
+.tabs{display:flex;gap:7px;width:max-content}
+.tab{font-family:monospace;font-size:11px;color:var(--muted);padding:5px 11px;border:1px solid var(--border);border-radius:6px;background:transparent;cursor:pointer;transition:all .15s;white-space:nowrap;position:relative}
+.tab.active{color:#fff;background:var(--accent);border-color:var(--accent)}
+.tab.cur:not(.active){border-color:var(--accent);color:var(--accent)}
+.tab.cur::after{content:'';width:5px;height:5px;background:var(--accent);border-radius:50%;position:absolute;top:-2px;right:-2px;box-shadow:0 0 0 2px var(--bg)}
+.tab.active.cur::after{background:#fff}
+
+/* SLIDER */
+.slider-wrap{flex:1;overflow:hidden;position:relative}
+.slider{display:flex;height:100%;transition:transform .33s cubic-bezier(.4,0,.2,1);will-change:transform}
+.panel{min-width:100%;height:100%;overflow-y:auto;padding-bottom:90px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.panel::-webkit-scrollbar{display:none}
+
+/* WEEK HEADER sticky */
+.wk-hdr{padding:16px 18px 10px;display:flex;align-items:flex-end;justify-content:space-between;position:sticky;top:0;background:var(--bg);z-index:5;border-bottom:1px solid var(--border)}
+.wk-num{font-size:64px;font-weight:900;line-height:1;color:var(--surface2);position:absolute;right:14px;bottom:6px;letter-spacing:-.04em;pointer-events:none;user-select:none}
+.wk-label{font-size:11px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:var(--muted);margin-bottom:3px}
+.wk-phase{color:var(--accent);margin-left:6px;letter-spacing:.12em}
+.wk-dates{font-size:20px;font-weight:700;position:relative;z-index:1}
+.wk-focus{font-family:monospace;font-size:10px;color:var(--accent);letter-spacing:.06em;position:relative;z-index:1;text-align:right;padding-bottom:3px;max-width:160px}
+
+/* CURRENT WEEK BANNER */
+.cur-banner{display:flex;align-items:center;gap:8px;margin:10px 14px 0;padding:8px 12px;background:rgba(240,149,106,.08);border:1px solid rgba(240,149,106,.22);border-radius:8px}
+.cur-dot{width:6px;height:6px;border-radius:50%;background:var(--accent);flex-shrink:0;animation:pulse 2.2s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.35;transform:scale(.65)}}
+.cur-text{font-family:monospace;font-size:10px;color:var(--accent);letter-spacing:.1em}
+
+/* DAY CARDS */
+.days{padding:10px 14px;display:flex;flex-direction:column;gap:7px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 13px;position:relative;overflow:hidden;transition:border-color .15s,background .15s,opacity .15s}
+.card.today{border-color:var(--accent);background:rgba(240,149,106,.07)}
+.card.today::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--accent);border-radius:10px 0 0 10px}
+.card.past:not(.today){opacity:.42}
+.card.done .day-title{text-decoration:line-through;text-decoration-color:var(--muted);opacity:.55}
+.card-inner{display:flex;align-items:flex-start;gap:11px}
+.type-dot{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:13px;margin-top:2px}
+.type-dot.run{background:rgba(240,149,106,.14)}
+.type-dot.long{background:rgba(196,154,108,.14)}
+.type-dot.strength{background:rgba(126,184,212,.14)}
+.type-dot.rest{background:rgba(255,255,255,.04)}
+.day-info{flex:1;min-width:0}
+.name-row{display:flex;align-items:center;gap:7px;margin-bottom:2px;flex-wrap:wrap}
+.day-name{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.day-date{font-family:monospace;font-size:10px;color:var(--muted)}
+.today-tag{font-family:monospace;font-size:9px;font-weight:700;background:var(--accent);color:#fff;padding:2px 6px;border-radius:3px;letter-spacing:.05em}
+.day-title{font-size:16px;font-weight:700;line-height:1.2;margin-bottom:3px}
+.day-title.rc{color:var(--run)}
+.day-title.lc{color:var(--long)}
+.day-title.sc{color:var(--strength)}
+.metrics{margin-bottom:3px}
+.met{display:inline-flex;align-items:center;gap:3px;margin-right:10px;font-size:10px;font-family:monospace}
+.met strong{color:var(--text);font-weight:600}
+.notes{margin-top:7px;padding-top:7px;border-top:1px solid var(--border);font-size:11px;font-family:monospace;color:var(--muted);line-height:1.55}
+
+/* CHECKBOX */
+.cb{flex-shrink:0;width:24px;height:24px;border:1.5px solid var(--border);border-radius:50%;background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .18s,border-color .18s,transform .1s;margin-top:3px;user-select:none;-webkit-user-select:none}
+.cb:active{transform:scale(.82)}
+.cb.on{background:var(--accent);border-color:var(--accent)}
+.cb.on::after{content:'';display:block;width:5px;height:9px;border:2px solid #fff;border-top:none;border-left:none;transform:rotate(42deg) translate(-1px,-1px)}
+
+/* BOTTOM NAV */
+.nav{position:fixed;bottom:0;left:0;right:0;max-width:430px;margin:0 auto;padding:10px 18px;background:linear-gradient(to top,var(--bg) 55%,transparent);display:flex;justify-content:space-between;align-items:center;pointer-events:none;z-index:20}
+.arrow{font-family:monospace;font-size:10px;color:var(--muted);letter-spacing:.1em;pointer-events:all;cursor:pointer;padding:8px;user-select:none}
+.arrow:active{color:var(--accent)}
+.dots{display:flex;gap:5px;align-items:center}
+.dot{width:5px;height:5px;border-radius:50%;background:var(--border);transition:all .2s;pointer-events:all;cursor:pointer}
+.dot.on{background:var(--accent);width:15px;border-radius:3px}
+
+/* TOAST */
+.toast{position:fixed;top:18px;left:50%;transform:translateX(-50%) translateY(-80px);background:var(--surface2);border:1px solid var(--border);color:var(--text);font-family:monospace;font-size:11px;padding:7px 15px;border-radius:6px;z-index:100;transition:transform .25s cubic-bezier(.34,1.56,.64,1);white-space:nowrap;letter-spacing:.05em}
+.toast.show{transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+
+<div class="app">
+  <div class="hdr">
+    <div class="hdr-row">
+      <div>
+        <div class="hdr-label">5K Target</div>
+        <div class="hdr-goal">18:59<span>goal</span></div>
+      </div>
+      <div class="today-badge" id="todayBadge">– –</div>
+    </div>
+  </div>
+  <div class="tabs-wrap"><div class="tabs" id="tabs"></div></div>
+  <div class="slider-wrap" id="sliderWrap">
+    <div class="slider" id="slider"></div>
+  </div>
+  <div class="nav">
+    <div class="arrow" onclick="navigate(-1)">← PREV</div>
+    <div class="dots" id="dots"></div>
+    <div class="arrow" onclick="navigate(1)">NEXT →</div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── PLAN CONFIG ──────────────────────────────────────────────────────────────
+const START = new Date(2026, 4, 25); // Mon 25 May 2026
+
+const P = {
+  easy:     '5:45–6:15/km',
+  tempo:    '3:58–4:10/km',
+  interval: '3:40–3:50/km',
+  long:     '5:30–6:00/km',
+  race:     '3:47/km avg',
+};
+
+const WEEKS = [
+  // W1 BASE · 25 May – 31 May
+  { label:'BASE', focus:'Easy aerobic introduction', days:[
+    { t:'strength', title:'Strength A',        notes:'Squats 3×6, Romanian DL 3×6, Glute bridge 3×10, Calf raises 3×12, Hip flexor stretch. Very light — just waking the muscles up.' },
+    { t:'run',      title:'Easy Run',           km:4,  pace:P.easy,     rpe:'RPE 4',   notes:'Super easy first run. No targets. Conversational pace the whole way. Focus on relaxed breathing and upright posture.' },
+    { t:'run',      title:'Easy Run',           km:5,  pace:P.easy,     rpe:'RPE 4',   notes:'Same easy effort as Tuesday. Keep cadence high (~170 spm) and arms relaxed. No watch pressure.' },
+    { t:'strength', title:'Strength B',         notes:'Split squat 3×6 each, Single-leg DL 3×6, Plank 3×30s, Band clamshells 3×12. Technique first — weight is secondary.' },
+    { t:'rest',     title:'Rest',               notes:'Full rest. Sleep 8h if you can — recovery is as important as the sessions in week 1.' },
+    { t:'long',     title:'Long Run',           km:7,  pace:P.long,     rpe:'RPE 4',   notes:'First long run — keep it easy and enjoyable. Time on feet, not pace. Bring water.' },
+    { t:'rest',     title:'Rest',               notes:'Full rest. Stretch quads and calves. Note any niggles.' },
+  ]},
+  // W2 BASE · 1 Jun – 7 Jun
+  { label:'BASE', focus:'Build comfort + introduce strides', days:[
+    { t:'strength', title:'Strength A',         notes:'Squats 3×8, Romanian DL 3×8, Glute bridge 3×12, Calf raises 3×15. Slight increase in reps vs W1.' },
+    { t:'run',      title:'Easy Run',           km:5,  pace:P.easy,     rpe:'RPE 4–5', notes:'Aerobic base. End with 4×15s strides (fast but relaxed, not a sprint) with full recovery. First taste of speed.' },
+    { t:'run',      title:'Easy Run',           km:6,  pace:P.easy,     rpe:'RPE 4–5', notes:'Steady aerobic effort. Z2 heart rate throughout. No pushing.' },
+    { t:'strength', title:'Strength B',         notes:'Split squat 3×8, Single-leg DL 3×8, Box jump 3×4, Side plank 3×25s each. Introduce box jumps lightly.' },
+    { t:'rest',     title:'Rest',               notes:'Active rest OK — short walk, gentle yoga, swimming. No running.' },
+    { t:'long',     title:'Long Run',           km:8,  pace:P.long,     rpe:'RPE 4–5', notes:'8km easy. Pick a scenic route to make it enjoyable. Gel optional at 40 min.' },
+    { t:'rest',     title:'Rest',               notes:'Rest and refuel. Protein-rich meal. Foam roll if legs feel heavy.' },
+  ]},
+  // W3 BASE · 8 Jun – 14 Jun
+  { label:'BASE', focus:'Consolidate base + first structured session', days:[
+    { t:'strength', title:'Strength A',         notes:'Squats 3×10, Romanian DL 3×10, Hip thrust 3×10, Calf raises 3×18. These lifts protect your running — own the pattern.' },
+    { t:'run',      title:'Easy Run',           km:5,  pace:P.easy,     rpe:'RPE 4–5', notes:'Pure aerobic. End with 4×20s strides with 60s walk recovery. Focus on quick turnover, relaxed jaw.' },
+    { t:'run',      title:'Fartlek',            km:7,  pace:'Mixed',    rpe:'RPE 5–7', notes:'2km easy WU → 15 min fartlek (30s faster / 60s easy, repeat) → 2km CD. Unstructured and playful — first quality session.' },
+    { t:'strength', title:'Strength B',         notes:'Split squat 3×10, Single-leg DL 3×8, Box jump 3×5, Plank 3×40s, Copenhagen plank 2×20s each. Copenhagen plank for adductor strength.' },
+    { t:'rest',     title:'Rest',               notes:'Rest. Three solid weeks in — legs need this.' },
+    { t:'long',     title:'Long Run',           km:9,  pace:P.long,     rpe:'RPE 4–5', notes:'9km easy. Notice your form over the last 2km — maintaining posture is a sign of real aerobic fitness building.' },
+    { t:'rest',     title:'Rest',               notes:'Full rest. W4 introduces real quality work — arrive fresh.' },
+  ]},
+  // W4 BUILD · 15 Jun – 21 Jun
+  { label:'BUILD', focus:'Introduce threshold + track work', days:[
+    { t:'strength', title:'Strength A',         notes:'Squats 4×8, Romanian DL 4×8, Plyometric lunge 3×5, Hip thrust 3×12. Start adding explosive lower body work.' },
+    { t:'run',      title:'Easy Run',           km:6,  pace:P.easy,     rpe:'RPE 4–5', notes:'Z2 aerobic. End with 4×20s strides. Legs may feel a little flat — that\'s fine.' },
+    { t:'run',      title:'Track Intervals',    km:7,  pace:P.interval, rpe:'RPE 8',   notes:'2km WU → 5×400m at goal 5K pace (3:47/km) w/ 90s standing rest → 1km CD. First proper speed work — controlled, not all-out.' },
+    { t:'strength', title:'Strength B',         notes:'Single-leg squat 3×8, Nordic hamstring curl 3×4, Jump squat 3×5, Copenhagen plank 3×20s each. Introduce Nordic curls carefully.' },
+    { t:'rest',     title:'Rest',               notes:'Rest. Track intervals + strength in same week — respect the load.' },
+    { t:'long',     title:'Long Run',           km:10, pace:P.long,     rpe:'RPE 4–5', notes:'First double-digit long run. Keep it honest and easy. Take a gel at 45 min. Finish feeling like you had more in the tank.' },
+    { t:'rest',     title:'Rest',               notes:'Full rest. Good week — the training is beginning to stack.' },
+  ]},
+  // W5 BUILD · 22 Jun – 28 Jun
+  { label:'BUILD', focus:'Threshold development', days:[
+    { t:'strength', title:'Strength A',         notes:'Squats 4×8 (slightly heavier), Romanian DL 4×8, Plyometric lunge 3×6, Hip thrust 3×12. Progressive overload week.' },
+    { t:'run',      title:'Easy Run',           km:6,  pace:P.easy,     rpe:'RPE 4–5', notes:'Aerobic base. Keep it genuinely easy — Wednesday is a hard day.' },
+    { t:'run',      title:'Threshold Run',      km:8,  pace:P.tempo,    rpe:'RPE 7–8', notes:'2km WU → 4km continuous at threshold (comfortably hard, can say a few words) → 2km CD. Key session — first sustained threshold effort.' },
+    { t:'strength', title:'Strength B',         notes:'Single-leg squat 3×10, Nordic 3×5, Jump lunge 3×5 each, Copenhagen plank 3×25s. Incrementing reps and difficulty.' },
+    { t:'rest',     title:'Rest',               notes:'Rest. The threshold run is taxing — don\'t underestimate it.' },
+    { t:'long',     title:'Long Run',           km:11, pace:P.long,     rpe:'RPE 4–5', notes:'11km easy. Longest run yet. Carry water. Last km can be slightly quicker if you feel good.' },
+    { t:'rest',     title:'Rest',               notes:'Rest. One more hard week ahead — eat well and sleep.' },
+  ]},
+  // W6 BUILD PEAK · 29 Jun – 5 Jul
+  { label:'BUILD', focus:'Peak volume + 5K pace work', days:[
+    { t:'strength', title:'Strength A',         notes:'Squats 4×6 (heaviest week), Romanian DL 4×6, Depth jump 3×4, Hip thrust 3×15. Highest strength load of the block.' },
+    { t:'run',      title:'Easy Run',           km:7,  pace:P.easy,     rpe:'RPE 4–5', notes:'Easy aerobic. The 5K intervals Wednesday are the priority — protect them with an honest easy day.' },
+    { t:'run',      title:'5K Pace Intervals',  km:9,  pace:P.interval, rpe:'RPE 8–9', notes:'2km WU → 5×1km at goal 5K pace (3:47/km) w/ 2 min jog rest → 2km CD. The key session of the whole block. This is where sub-19 is built.' },
+    { t:'strength', title:'Strength B',         notes:'Single-leg DL 3×10, Nordic 3×5, Lateral band walk 3×20, Jump lunge 3×5 each. Sub-max — don\'t empty the tank.' },
+    { t:'rest',     title:'Rest',               notes:'Rest. Peak week. 5×1km + long run in one week is serious load. Let it absorb.' },
+    { t:'long',     title:'Long Run',           km:12, pace:P.long,     rpe:'RPE 4–5', notes:'Peak long run — 12km easy. Legs will be tired. Stick to easy pace, focus on good form. Gel at 50 min.' },
+    { t:'rest',     title:'Rest',               notes:'Full rest. Peak week done. Excellent work.' },
+  ]},
+  // W7 SHARPEN · 6 Jul – 12 Jul
+  { label:'SHARPEN', focus:'Absorb peak, stay sharp', days:[
+    { t:'strength', title:'Strength A',         notes:'Squats 3×8 (same weight as W6), Romanian DL 3×8, Box jump 3×4. Volume down ~25%, intensity maintained. Protect the fitness.' },
+    { t:'run',      title:'Easy Run',           km:5,  pace:P.easy,     rpe:'RPE 4',   notes:'Easy and comfortable. Legs may feel heavy after peak week — that\'s adaptation. Keep it slow and enjoy it.' },
+    { t:'run',      title:'Mixed Intervals',    km:8,  pace:'Mixed',    rpe:'RPE 7–9', notes:'2km WU → 2×1km at tempo + 4×200m faster-than-5K pace w/ 90s rest → 1.5km CD. Sharpen the neuromuscular system.' },
+    { t:'strength', title:'Strength B',         notes:'Single-leg squat 3×8, Nordic 3×4, Copenhagen plank 3×25s, Calf raise 3×18. Brief and quality — 25 mins max.' },
+    { t:'rest',     title:'Rest',               notes:'Rest. Two weeks to race day. Trust the fitness you\'ve built.' },
+    { t:'long',     title:'Medium-Long Run',    km:9,  pace:P.long,     rpe:'RPE 4–5', notes:'Last real long run. 9km easy — last 2km can drift slightly faster if it feels natural. Nothing forced.' },
+    { t:'rest',     title:'Rest',               notes:'Rest. One week to race day. Trust the fitness you\'ve built.' },
+  ]},
+  // W8 SHARPEN · 13 Jul – 19 Jul
+  { label:'SHARPEN', focus:'Race rehearsal + confidence', days:[
+    { t:'strength', title:'Strength A',         notes:'Squats 2×6, Glute bridge 2×12, Calf raise 2×15. Half the volume of peak. Activation only — nothing that creates soreness.' },
+    { t:'run',      title:'Easy Run',           km:5,  pace:P.easy,     rpe:'RPE 4',   notes:'Comfortable 5km. End with 4×20s strides. Legs should feel fresh and springy.' },
+    { t:'run',      title:'5K Dress Rehearsal', km:7,  pace:P.race,     rpe:'RPE 8–9', notes:'2km WU → 3km continuous at exact race pace (3:47/km) → 2km CD. Feel the pace. Not a time trial — a rehearsal. Finish in full control.' },
+    { t:'strength', title:'Strength B',         notes:'Single-leg DL 2×8, Band clamshells 2×15, Hip flexor mobility. 20 mins max.' },
+    { t:'rest',     title:'Rest',               notes:'Rest. 10 days out. Sleep is the best performance enhancer you have.' },
+    { t:'long',     title:'Easy Long',          km:7,  pace:P.long,     rpe:'RPE 4',   notes:'Easy 7km. Last longer run before race week. Relaxed and enjoyable — just moving the legs and appreciating the fitness.' },
+    { t:'rest',     title:'Rest',               notes:'Rest. You\'re ready. Race week is just maintenance and freshness.' },
+  ]},
+  // W9 RACE WEEK · 20 Jul – 26 Jul · RACE SAT 25 JUL
+  { label:'RACE', focus:'Arrive fresh — sub 18:59', days:[
+    { t:'strength', title:'Light Activation',   notes:'Squats 2×5, Glute bridge 2×10, Calf raise 2×10. 15 mins only. Just priming the system — nothing that creates fatigue.' },
+    { t:'run',      title:'Easy Run',           km:4,  pace:P.easy,     rpe:'RPE 4',   notes:'Short and easy. May feel sluggish — classic taper fatigue. Don\'t panic, it means your body is resting up. Trust it.' },
+    { t:'run',      title:'Sharpener',          km:4,  pace:'Strides',  rpe:'RPE 7',   notes:'1.5km WU easy → 4×100m strides at race pace with full recovery → 1.5km CD. Done in 30 mins. Just to feel sharp and quick.' },
+    { t:'rest',     title:'Rest',               notes:'Rest — Thu 24 Jul. 2 days out. Carb-focused meals today and tomorrow. Stay off your feet where possible.' },
+    { t:'rest',     title:'Race Eve',           notes:'Fri 25 Jul — rest day. Carb-rich dinner by 7pm. No alcohol. In bed by 10pm. Kit is laid out. Vomero 18s are laced up.' },
+    { t:'long',     title:'RACE DAY 🏁',        km:5,  pace:'3:47/km avg', rpe:'RPE 9–10', notes:'Sat 26 Jul. WU: 10–15 min easy jog + 4×100m strides. Splits: km1 3:52 (don\'t go out too fast!), km2 3:48, km3 3:47, km4 3:46, km5 GO. Stay tall. Drive the arms. 9 weeks of work — sub 18:59.' },
+    { t:'rest',     title:'Recovery',           notes:'Sun 27 Jul. Walk only. Legs will be sore. That\'s the badge. Well done. 🎉' },
+  ]},
+];
+
+// ── STORAGE (bulletproof for content:// URLs) ────────────────────────────────
+const SK = 'rich5k-v3';
+let _mem = {};
+function _get() {
+  try { return JSON.parse(localStorage.getItem(SK) || '{}'); }
+  catch(e) { return _mem; }
+}
+function _set(v) {
+  try { localStorage.setItem(SK, JSON.stringify(v)); }
+  catch(e) { _mem = v; }
+}
+function isDone(w, d)  { return !!_get()[w+'-'+d]; }
+function toggle(w, d)  {
+  var c = _get(), k = w+'-'+d;
+  if (c[k]) delete c[k]; else c[k] = true;
+  _set(c);
+  return !!c[k];
+}
+
+// ── HELPERS ─────────────────────────────────────────────────────────────────
+var today = new Date();
+function addD(d, n) { var r = new Date(d); r.setDate(r.getDate() + n); return r; }
+function fmt(d)  { return d.toLocaleDateString('en-GB', {day:'numeric', month:'short'}); }
+function fmtS(d) { return d.toLocaleDateString('en-GB', {day:'2-digit', month:'short'}).toUpperCase(); }
+function fmtW(d) { return d.toLocaleDateString('en-GB', {weekday:'short'}).toUpperCase(); }
+function same(a, b)   { return a.toDateString() === b.toDateString(); }
+function before(a, b) {
+  var x = new Date(a); x.setHours(0,0,0,0);
+  var y = new Date(b); y.setHours(0,0,0,0);
+  return x < y;
+}
+function icon(t) {
+  return {run:'⚡', long:'🏃', strength:'💪', rest:'🌙'}[t] || '·';
+}
+function findToday() {
+  for (var w = 0; w < WEEKS.length; w++)
+    for (var d = 0; d < 7; d++)
+      if (same(addD(START, w*7+d), today)) return {w:w, d:d};
+  return null;
+}
+
+// ── STATE ────────────────────────────────────────────────────────────────────
+var CUR = 0;
+
+// ── BUILD ────────────────────────────────────────────────────────────────────
+function build() {
+  var hit = findToday();
+  CUR = hit ? hit.w : 0;
+  document.getElementById('todayBadge').textContent = fmtW(today) + ' ' + fmtS(today);
+  buildTabs(hit);
+  buildPanels(hit);
+  buildDots();
+  slide(CUR, false);
+}
+
+function buildTabs(hit) {
+  var el = document.getElementById('tabs');
+  el.innerHTML = '';
+  WEEKS.forEach(function(w, i) {
+    var b = document.createElement('button');
+    var cls = 'tab';
+    if (i === CUR) cls += ' active';
+    if (hit && hit.w === i) cls += ' cur';
+    b.className = cls;
+    b.textContent = 'W' + (i+1) + ' · ' + w.label;
+    b.onclick = (function(idx){ return function(){ go(idx); }; })(i);
+    el.appendChild(b);
+  });
+}
+
+function buildPanels(hit) {
+  var sl = document.getElementById('slider');
+  sl.innerHTML = '';
+  WEEKS.forEach(function(w, wi) {
+    var ws = addD(START, wi*7);
+    var we = addD(START, wi*7+6);
+    var isNow = hit && hit.w === wi;
+
+    var panel = document.createElement('div');
+    panel.className = 'panel';
+
+    // sticky week header
+    var hdr = document.createElement('div');
+    hdr.className = 'wk-hdr';
+    hdr.innerHTML =
+      '<div>' +
+        '<div class="wk-label">WEEK ' + (wi+1) + ' <span class="wk-phase">' + w.label + '</span></div>' +
+        '<div class="wk-dates">' + fmt(ws) + ' – ' + fmt(we) + '</div>' +
+      '</div>' +
+      '<div style="position:relative;z-index:1;text-align:right">' +
+        '<div class="wk-focus">' + w.focus + '</div>' +
+      '</div>' +
+      '<div class="wk-num">' + String(wi+1).padStart(2,'0') + '</div>';
+    panel.appendChild(hdr);
+
+    // current week banner
+    if (isNow) {
+      var banner = document.createElement('div');
+      banner.className = 'cur-banner';
+      banner.innerHTML = '<div class="cur-dot"></div><span class="cur-text">CURRENT WEEK</span>';
+      panel.appendChild(banner);
+    }
+
+    // day cards
+    var list = document.createElement('div');
+    list.className = 'days';
+
+    w.days.forEach(function(d, di) {
+      var date   = addD(START, wi*7+di);
+      var isT    = same(date, today);
+      var isPast = before(date, today);
+      var done   = isDone(wi, di);
+
+      var card = document.createElement('div');
+      var cc = 'card';
+      if (isT)           cc += ' today';
+      if (isPast && !isT) cc += ' past';
+      if (done)          cc += ' done';
+      card.className = cc;
+
+      var colClass = {run:'rc', long:'lc', strength:'sc'}[d.t] || '';
+      var mets = '';
+      if (d.km)   mets += '<span class="met"><strong>' + d.km + 'km</strong></span>';
+      if (d.pace) mets += '<span class="met"><strong>' + d.pace + '</strong></span>';
+      if (d.rpe)  mets += '<span class="met">' + d.rpe + '</span>';
+
+      card.innerHTML =
+        '<div class="card-inner">' +
+          '<div class="type-dot ' + d.t + '">' + icon(d.t) + '</div>' +
+          '<div class="day-info">' +
+            '<div class="name-row">' +
+              '<span class="day-name">' + date.toLocaleDateString('en-GB',{weekday:'long'}) + '</span>' +
+              '<span class="day-date">' + fmt(date) + '</span>' +
+              (isT ? '<span class="today-tag">TODAY</span>' : '') +
+            '</div>' +
+            '<div class="day-title ' + colClass + '">' + d.title + '</div>' +
+            (mets ? '<div class="metrics">' + mets + '</div>' : '') +
+            (d.notes ? '<div class="notes">' + d.notes + '</div>' : '') +
+          '</div>' +
+          '<div class="cb' + (done ? ' on' : '') + '" data-wi="' + wi + '" data-di="' + di + '" role="checkbox" aria-checked="' + done + '" aria-label="Mark complete"></div>' +
+        '</div>';
+
+      // checkbox tap
+      var cb = card.querySelector('.cb');
+      cb.addEventListener('click', function(e) {
+        e.stopPropagation();
+        var wi2 = parseInt(this.getAttribute('data-wi'));
+        var di2 = parseInt(this.getAttribute('data-di'));
+        var now2 = toggle(wi2, di2);
+        this.classList.toggle('on', now2);
+        this.setAttribute('aria-checked', now2);
+        this.parentElement.parentElement.classList.toggle('done', now2);
+        showToast(now2 ? '✓ Session logged' : 'Unmarked');
+      });
+
+      list.appendChild(card);
+    });
+
+    panel.appendChild(list);
+    sl.appendChild(panel);
+  });
+}
+
+function buildDots() {
+  var el = document.getElementById('dots');
+  el.innerHTML = '';
+  WEEKS.forEach(function(_, i) {
+    var d = document.createElement('div');
+    d.className = 'dot' + (i === CUR ? ' on' : '');
+    d.onclick = (function(idx){ return function(){ go(idx); }; })(i);
+    el.appendChild(d);
+  });
+}
+
+function slide(idx, anim) {
+  if (anim === undefined) anim = true;
+  var sl = document.getElementById('slider');
+  if (!anim) sl.style.transition = 'none';
+  sl.style.transform = 'translateX(-' + (idx * 100) + '%)';
+  if (!anim) requestAnimationFrame(function(){ sl.style.transition = ''; });
+
+  document.querySelectorAll('.tab').forEach(function(t, i){ t.classList.toggle('active', i===idx); });
+  document.querySelectorAll('.dot').forEach(function(d, i){ d.classList.toggle('on', i===idx); });
+
+  // scroll active tab into view
+  var tabs = document.getElementById('tabs');
+  var tab  = tabs.children[idx];
+  if (tab) {
+    var wrap = tabs.parentElement;
+    wrap.scrollTo({ left: tab.offsetLeft - (wrap.clientWidth - tab.offsetWidth)/2, behavior:'smooth' });
+  }
+
+  // scroll today card or top of panel
+  var panels = document.querySelectorAll('.panel');
+  var panel  = panels[idx];
+  if (panel) {
+    var tc = panel.querySelector('.today');
+    if (tc) { setTimeout(function(){ tc.scrollIntoView({behavior:'smooth', block:'center'}); }, 360); }
+    else panel.scrollTo({top:0, behavior:'smooth'});
+  }
+}
+
+function go(i) {
+  if (i < 0 || i >= WEEKS.length) return;
+  CUR = i;
+  slide(CUR);
+}
+function navigate(dir) { go(CUR + dir); }
+
+// ── SWIPE ────────────────────────────────────────────────────────────────────
+var tx = 0, ty = 0, sw = false;
+var swWrap = document.getElementById('sliderWrap');
+swWrap.addEventListener('touchstart', function(e){ tx = e.touches[0].clientX; ty = e.touches[0].clientY; sw = false; }, {passive:true});
+swWrap.addEventListener('touchmove',  function(e){ var dx=e.touches[0].clientX-tx, dy=e.touches[0].clientY-ty; if(!sw && Math.abs(dx)>Math.abs(dy) && Math.abs(dx)>8) sw=true; }, {passive:true});
+swWrap.addEventListener('touchend',   function(e){ if(sw && Math.abs(e.changedTouches[0].clientX-tx)>50) navigate(e.changedTouches[0].clientX<tx?1:-1); sw=false; });
+
+document.addEventListener('keydown', function(e){ if(e.key==='ArrowLeft') navigate(-1); if(e.key==='ArrowRight') navigate(1); });
+
+// ── TOAST ────────────────────────────────────────────────────────────────────
+var _tt;
+function showToast(msg) {
+  var el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(_tt);
+  _tt = setTimeout(function(){ el.classList.remove('show'); }, 2000);
+}
+
+// ── INIT ─────────────────────────────────────────────────────────────────────
+build();
+if (today < START) {
+  var daysUntil = Math.ceil((START - today) / 86400000);
+  setTimeout(function(){ showToast('Plan starts in ' + daysUntil + ' day' + (daysUntil !== 1 ? 's' : '') + ' · 25 May'); }, 700);
+}
+
+// ── PWA: ICON + SERVICE WORKER ───────────────────────────────────────────────
+(function() {
+  // Render SVG icon and set as apple-touch-icon
+  var svgIcon = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">'
+    + '<rect width="512" height="512" rx="112" fill="#0f0f0f"/>'
+    + '<ellipse cx="256" cy="300" rx="148" ry="88" fill="none" stroke="#2a2520" stroke-width="26"/>'
+    + '<circle cx="256" cy="168" r="24" fill="#f0956a"/>'
+    + '<line x1="256" y1="192" x2="256" y2="268" stroke="#f0956a" stroke-width="16" stroke-linecap="round"/>'
+    + '<line x1="256" y1="218" x2="216" y2="250" stroke="#f0956a" stroke-width="13" stroke-linecap="round"/>'
+    + '<line x1="256" y1="218" x2="298" y2="242" stroke="#f0956a" stroke-width="13" stroke-linecap="round"/>'
+    + '<line x1="256" y1="268" x2="222" y2="320" stroke="#f0956a" stroke-width="14" stroke-linecap="round"/>'
+    + '<line x1="222" y1="320" x2="200" y2="356" stroke="#f0956a" stroke-width="14" stroke-linecap="round"/>'
+    + '<line x1="256" y1="268" x2="292" y2="312" stroke="#f0956a" stroke-width="14" stroke-linecap="round"/>'
+    + '<line x1="292" y1="312" x2="320" y2="282" stroke="#f0956a" stroke-width="14" stroke-linecap="round"/>'
+    + '<text x="256" y="440" font-family="Arial Black,sans-serif" font-weight="900" font-size="68" fill="#f0956a" text-anchor="middle" letter-spacing="-2">5K</text>'
+    + '</svg>';
+
+  try {
+    var img = new Image();
+    var svgUrl = URL.createObjectURL(new Blob([svgIcon], {type:'image/svg+xml'}));
+    img.onload = function() {
+      try {
+        var canvas = document.createElement('canvas');
+        canvas.width = canvas.height = 512;
+        canvas.getContext('2d').drawImage(img, 0, 0, 512, 512);
+        URL.revokeObjectURL(svgUrl);
+        document.getElementById('apple-icon').href = canvas.toDataURL('image/png');
+      } catch(e) {}
+    };
+    img.src = svgUrl;
+  } catch(e) {}
+
+  // Simple service worker for offline support
+  if ('serviceWorker' in navigator) {
+    try {
+      var sw = "const C='rich5k-v3';"
+        + "self.addEventListener('install',e=>{e.waitUntil(caches.open(C).then(c=>c.addAll(['./'])));self.skipWaiting();});"
+        + "self.addEventListener('activate',e=>{e.waitUntil(clients.claim());});"
+        + "self.addEventListener('fetch',e=>{e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request)));});";
+      navigator.serviceWorker.register(
+        URL.createObjectURL(new Blob([sw], {type:'application/javascript'}))
+      ).catch(function(){});
+    } catch(e) {}
+  }
+})();
+</script>
+</body>
+</html>
